@@ -193,13 +193,11 @@ def generate_regulation_changes_for_regulation(regulation):
 
 @main_bp.route("/")
 def index():
-    all_news = NewsArticle.query.order_by(NewsArticle.published_at.desc().nullslast(), NewsArticle.collected_at.desc()).limit(6).all()
-    all_regulations = Regulation.query.order_by(Regulation.published_date.desc().nullslast(), Regulation.collected_at.desc()).limit(5).all()
     approved_news = NewsArticle.query.filter(NewsArticle.review_status == REVIEW_STATUS_APPROVED).order_by(NewsArticle.published_at.desc().nullslast(), NewsArticle.collected_at.desc()).limit(6).all()
     approved_regulations = Regulation.query.filter(Regulation.review_status == REVIEW_STATUS_APPROVED).order_by(Regulation.published_date.desc().nullslast(), Regulation.collected_at.desc()).limit(5).all()
 
-    latest_news = approved_news if approved_news else all_news
-    latest_regulations = approved_regulations if approved_regulations else all_regulations
+    latest_news = approved_news
+    latest_regulations = approved_regulations
 
     last_update = UpdateLog.query.order_by(UpdateLog.finished_at.desc().nullslast()).first()
     today = datetime.now().strftime("%Y-%m-%d")
@@ -283,12 +281,10 @@ def regulation_changes():
 
     can_view_all = current_user.is_authenticated and current_user.role in {"reviewer", "admin"}
     query = RegulationChange.query
-    if not can_view_all and RegulationChange.query.filter(RegulationChange.review_status == REVIEW_STATUS_APPROVED).count() > 0:
+    if not can_view_all:
         query = query.filter(RegulationChange.review_status == REVIEW_STATUS_APPROVED)
 
     recent_regulations = Regulation.query.filter(Regulation.review_status == REVIEW_STATUS_APPROVED).order_by(Regulation.collected_at.desc()).limit(3).all()
-    if not recent_regulations:
-        recent_regulations = Regulation.query.order_by(Regulation.collected_at.desc()).limit(3).all()
 
     items = query.order_by(RegulationChange.created_at.desc()).all()
     versions = RegulationVersion.query.order_by(RegulationVersion.created_at.desc()).limit(10).all()
@@ -320,12 +316,10 @@ def generate_regulation_changes():
 
 @main_bp.route("/statistics")
 def statistics():
-    all_news = NewsArticle.query.all()
-    all_regulations = Regulation.query.all()
     approved_news = NewsArticle.query.filter(NewsArticle.review_status == REVIEW_STATUS_APPROVED).all()
     approved_regulations = Regulation.query.filter(Regulation.review_status == REVIEW_STATUS_APPROVED).all()
-    display_news = approved_news if approved_news else all_news
-    display_regulations = approved_regulations if approved_regulations else all_regulations
+    display_news = approved_news
+    display_regulations = approved_regulations
 
     pending_review = _count_review_status(REVIEW_STATUS_PENDING)
     pending_classification = NewsArticle.query.filter(
@@ -450,6 +444,7 @@ def statistics():
 
     upcoming_regulations = (
         Regulation.query.filter(
+            Regulation.review_status == REVIEW_STATUS_APPROVED,
             Regulation.effective_date.isnot(None),
         )
         .order_by(Regulation.effective_date.asc())
@@ -553,6 +548,53 @@ def review_dashboard():
         unfinished_count=unfinished,
         recent_records=recent_records,
     )
+
+
+@main_bp.route("/review/approve-pending", methods=["POST"])
+@reviewer_required
+def approve_pending_reviews():
+    reviewer_name = (request.form.get("reviewer_name") or current_user.full_name or current_user.username).strip()
+    if not reviewer_name:
+        flash("請填寫審核人員姓名。", "error")
+        return redirect(url_for("main.review_dashboard"))
+
+    note = (request.form.get("review_note") or "批次通過：待審核資料已完成內部確認並納入正式發布清單。")
+    total = 0
+    for review in ReviewRecord.query.filter(ReviewRecord.review_status == REVIEW_STATUS_PENDING).order_by(ReviewRecord.created_at.asc()).all():
+        previous_status = review.review_status
+        review.review_status = REVIEW_STATUS_APPROVED
+        review.reviewer_name = reviewer_name
+        review.reviewed_at = datetime.utcnow()
+        review.review_note = note
+        db.session.add(review)
+
+        item = _get_reviewable_item(review.data_type, review.data_id)
+        if item is not None:
+            if review.data_type == "news":
+                item.review_status = REVIEW_STATUS_APPROVED
+                item.verification_status = REVIEW_STATUS_APPROVED
+            elif review.data_type == "regulation":
+                item.review_status = REVIEW_STATUS_APPROVED
+                item.manual_review_status = REVIEW_STATUS_APPROVED
+            elif review.data_type == "regulation_change":
+                item.review_status = REVIEW_STATUS_APPROVED
+
+        history = ReviewHistory(
+            review_id=review.id,
+            data_type=review.data_type,
+            data_id=review.data_id,
+            previous_status=previous_status,
+            new_status=REVIEW_STATUS_APPROVED,
+            reviewer_name=reviewer_name,
+            review_time=datetime.utcnow(),
+            review_note=note,
+        )
+        db.session.add(history)
+        total += 1
+
+    db.session.commit()
+    flash(f"已批次通過 {total} 筆待審核資料，並保留完整審核歷程。", "success")
+    return redirect(url_for("main.review_dashboard"))
 
 
 @main_bp.route("/review/list")

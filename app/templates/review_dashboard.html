@@ -10,6 +10,13 @@
         {% if current_user.role == 'admin' %}
             <a href="{{ url_for('main.review_users') }}" class="secondary-button">審核人員管理</a>
         {% endif %}
+        {% if pending_count %}
+        <form method="post" action="{{ url_for('main.approve_pending_reviews') }}" class="inline-form">
+            <input type="hidden" name="reviewer_name" value="{{ current_user.full_name or current_user.username }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="primary-button">批次通過待審核</button>
+        </form>
+        {% endif %}
     </div>
 </section>
 
