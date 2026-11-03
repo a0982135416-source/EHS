@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}統計分析｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header paper-panel">
+    <div class="section-label">統計分析</div>
+    <h1>職安資料統計</h1>
+    <p class="muted-note">說明：新聞篇數僅為媒體報導量，非實際職災件數；統計僅作趨勢與分布觀察，並保留人工審核與資料計算口徑說明。</p>
+</section>
+
+<div class="stats-grid">
+    <div class="stat-box">
+        <span class="label">新聞總量</span>
+        <strong>{{ news_total }}</strong>
+    </div>
+    <div class="stat-box">
+        <span class="label">法規總量</span>
+        <strong>{{ regulations_total }}</strong>
+    </div>
+    <div class="stat-box">
+        <span class="label">待確認項目</span>
+        <strong>{{ pending_review }}</strong>
+    </div>
+    <div class="stat-box">
+        <span class="label">待分類新聞</span>
+        <strong>{{ pending_classification }}</strong>
+    </div>
+</div>
+
+<div class="status-box paper-panel">
+    <p><strong>計算口徑：</strong>此處統計僅基於已收錄資料庫內容，不直接等同於實際事故件數；發生日期、產業別與事故類型仍需依官方資料與人工審核確認。</p>
+    <p>最後更新：{{ last_update.finished_at.strftime('%Y-%m-%d %H:%M') if last_update and last_update.finished_at else '尚未更新' }}</p>
+</div>
+
+<div class="chart-grid">
+    <div class="chart-card paper-panel">
+        <h3>每月職災新聞數</h3>
+        <div id="news_month_chart" class="plotly-chart"></div>
+    </div>
+    <div class="chart-card paper-panel">
+        <h3>每月新增法規數</h3>
+        <div id="regulation_month_chart" class="plotly-chart"></div>
+    </div>
+    <div class="chart-card paper-panel">
+        <h3>事故類型排行</h3>
+        <div id="accident_chart" class="plotly-chart"></div>
+    </div>
+    <div class="chart-card paper-panel">
+        <h3>產業別分布</h3>
+        <div id="industry_chart" class="plotly-chart"></div>
+    </div>
+</div>
+
+<div class="paper-panel summary-list-panel">
+    <div class="section-label">即將施行法規</div>
+    {% if upcoming_regulations %}
+        <ul class="summary-list">
+            {% for regulation in upcoming_regulations %}
+            <li>
+                <strong>{{ regulation.name }}</strong>
+                <span>{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '日期未確認' }}</span>
+                <span>{{ regulation.authority or '主管機關未確認' }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p class="muted-note">目前沒有已核准且已定義施行日期的法規資料，請後續補齊官方公布內容。</p>
+    {% endif %}
+</div>
+
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+<script>
+  const chartConfigs = [
+    { id: 'news_month_chart', fig: {{ news_month_chart | safe }} },
+    { id: 'regulation_month_chart', fig: {{ regulation_month_chart | safe }} },
+    { id: 'accident_chart', fig: {{ accident_chart | safe }} },
+    { id: 'industry_chart', fig: {{ industry_chart | safe }} }
+  ];
+
+  function renderCharts() {
+    chartConfigs.forEach(({ id, fig }) => {
+      Plotly.newPlot(id, fig.data, fig.layout, { responsive: true, displayModeBar: false });
+    });
+  }
+
+  renderCharts();
+  window.addEventListener('resize', renderCharts);
+</script>
+{% endblock %}

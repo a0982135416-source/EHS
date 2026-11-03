@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ regulation.name }}｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header">
+    <h1>{{ regulation.name }}</h1>
+</section>
+<article class="regulation-detail">
+    <div class="story-meta">
+        <span>主管機關：{{ regulation.authority or '未確認' }}</span>
+        <span class="status-badge pending">狀態：{{ regulation.status or '待確認' }}</span>
+        <span>類型：{{ regulation.regulation_type or '未確認' }}</span>
+    </div>
+    <p><strong>摘要：</strong>{{ (regulation.summary|striptags) or '摘要尚未提供。' }}</p>
+    <ul>
+        <li>預告日期：{{ regulation.notice_date.strftime('%Y-%m-%d') if regulation.notice_date else '尚未確認' }}</li>
+        <li>預告截止日期：{{ regulation.notice_deadline.strftime('%Y-%m-%d') if regulation.notice_deadline else '尚未確認' }}</li>
+        <li>發布或公布日期：{{ regulation.published_date.strftime('%Y-%m-%d') if regulation.published_date else '尚未確認' }}</li>
+        <li>施行日期：{{ regulation.effective_date.strftime('%Y-%m-%d') if regulation.effective_date else '尚未確認' }}</li>
+        <li>廢止日期：{{ regulation.abolished_date.strftime('%Y-%m-%d') if regulation.abolished_date else '尚未確認' }}</li>
+    </ul>
+    {% if regulation.official_url %}
+    <p><a href="{{ regulation.official_url }}" target="_blank" rel="noopener noreferrer">官方公告連結</a></p>
+    {% endif %}
+    {% if regulation.source_url %}
+    <p><a href="{{ regulation.source_url }}" target="_blank" rel="noopener noreferrer">官方原始文件連結</a></p>
+    {% endif %}
+</article>
+{% endblock %}

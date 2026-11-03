@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% block title %}人工審核管理｜總覽{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div class="section-label">人工審核管理</div>
+    <h1>審核總覽</h1>
+    <div class="toolbar">
+        <a href="{{ url_for('main.review_list') }}" class="primary-button">待審核清單</a>
+        <a href="{{ url_for('main.review_history') }}" class="secondary-button">審核歷程</a>
+        {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('main.review_users') }}" class="secondary-button">審核人員管理</a>
+        {% endif %}
+    </div>
+</section>
+
+<div class="stats-grid review-grid">
+    <div class="stat-card pending">
+        <div class="stat-label">待審核件數</div>
+        <div class="stat-value">{{ pending_count }}</div>
+    </div>
+    <div class="stat-card approved">
+        <div class="stat-label">已通過件數</div>
+        <div class="stat-value">{{ approved_count }}</div>
+    </div>
+    <div class="stat-card revision">
+        <div class="stat-label">待修正件數</div>
+        <div class="stat-value">{{ revision_count }}</div>
+    </div>
+    <div class="stat-card rejected">
+        <div class="stat-label">不通過件數</div>
+        <div class="stat-value">{{ rejected_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">今日審核件數</div>
+        <div class="stat-value">{{ today_count }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-label">尚未完成審核件數</div>
+        <div class="stat-value">{{ unfinished_count }}</div>
+    </div>
+</div>
+
+<section class="review-panel">
+    <div class="section-label">最近審核紀錄</div>
+    {% if recent_records %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>資料類型</th>
+                <th>標題</th>
+                <th>狀態</th>
+                <th>審核人員</th>
+                <th>時間</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in recent_records %}
+            <tr>
+                <td>{{ '新聞' if record.data_type == 'news' else '法規' }}</td>
+                <td><a href="{{ url_for('main.review_detail', review_id=record.id) }}">{{ record.title }}</a></td>
+                <td><span class="status-badge {{ 'pending' if record.review_status == '待審核' else 'approved' if record.review_status == '通過' else 'revision' if record.review_status == '待修正' else 'rejected' }}">{{ record.review_status }}</span></td>
+                <td>{{ record.reviewer_name or '尚未審核' }}</td>
+                <td>{{ record.updated_at.strftime('%Y-%m-%d %H:%M') if record.updated_at else '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted-note">目前尚無審核紀錄。</p>
+    {% endif %}
+</section>
+{% endblock %}

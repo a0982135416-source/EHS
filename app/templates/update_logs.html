@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}更新紀錄｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header">
+    <h1>更新紀錄</h1>
+    <p class="muted-note">資料來源更新結果與錯誤狀態皆保留在資料庫中，便於追蹤單一來源失敗對其他來源的影響範圍。</p>
+</section>
+
+<div class="log-list">
+    {% for log in items.items %}
+    <article class="log-card">
+        <h3>{{ log.source_name }}（{{ log.source_type }}）</h3>
+        <div class="meta-stack">
+            <span>開始：{{ log.started_at.strftime('%Y-%m-%d %H:%M') if log.started_at else '未記錄' }}</span>
+            <span>結束：{{ log.finished_at.strftime('%Y-%m-%d %H:%M') if log.finished_at else '未記錄' }}</span>
+            <span class="status-badge pending">{{ log.status }}</span>
+        </div>
+        <p>取得筆數：{{ log.items_found }} / 新增：{{ log.new_items }} / 更新：{{ log.updated_items }} / 失敗：{{ log.failed_items }}</p>
+        {% if log.error_message %}<p>錯誤訊息：{{ log.error_message }}</p>{% endif %}
+    </article>
+    {% else %}
+    <div class="status-box"><p>目前沒有更新紀錄。</p></div>
+    {% endfor %}
+</div>
+
+{% if items.pages > 1 %}
+<nav class="pager">
+    {% if items.has_prev %}<a href="{{ url_for('main.update_logs', page=items.prev_num) }}">上一頁</a>{% endif %}
+    <span>第 {{ items.page }} / {{ items.pages }} 頁</span>
+    {% if items.has_next %}<a href="{{ url_for('main.update_logs', page=items.next_num) }}">下一頁</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

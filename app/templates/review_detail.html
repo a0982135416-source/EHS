@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block title %}人工審核管理｜詳細資料{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div class="section-label">審核詳細頁</div>
+    <h1>{{ review.title }}</h1>
+    <p class="muted-note">資料類型：{{ '新聞' if review.data_type == 'news' else '法規' }}｜當前狀態：<span class="status-badge {{ 'pending' if review.review_status == '待審核' else 'approved' if review.review_status == '通過' else 'revision' if review.review_status == '待修正' else 'rejected' }}">{{ review.review_status }}</span></p>
+</section>
+
+<div class="detail-grid">
+    <section class="review-panel">
+        <h2>原始資料內容</h2>
+        <div class="meta-list">
+            <div><strong>資料編號：</strong>{{ review.id }}</div>
+            <div><strong>資料來源：</strong>{{ review.source_name or '未提供' }}</div>
+            <div><strong>發布日期：</strong>{{ review.published_at.strftime('%Y-%m-%d') if review.published_at else '未確認' }}</div>
+            <div><strong>蒐集時間：</strong>{{ review.collected_at.strftime('%Y-%m-%d %H:%M') if review.collected_at else '—' }}</div>
+            <div><strong>原始網址：</strong>{% if review.source_url %}<a href="{{ review.source_url }}" target="_blank" rel="noopener noreferrer">開啟連結</a>{% else %}未提供{% endif %}</div>
+            <div><strong>審核人員：</strong>{{ review.reviewer_name or '尚未審核' }}</div>
+            <div><strong>審核備註：</strong>{{ review.review_note or '尚未填寫' }}</div>
+        </div>
+        <div class="summary-box">
+            {{ review.summary or '此筆資料尚未提供摘要。' }}
+        </div>
+    </section>
+
+    <aside class="review-panel">
+        <h2>審核操作</h2>
+        <form method="post" action="{{ url_for('main.review_process', review_id=review.id) }}" class="form-panel">
+            {{ form.hidden_tag() }}
+            <div class="form-row">
+                <label>審核人員</label>
+                {{ form.reviewer_name(class_='form-control') }}
+            </div>
+            <div class="form-row">
+                <label>審核備註</label>
+                {{ form.review_note(class_='form-control', rows=6) }}
+            </div>
+            <div class="decision-buttons">
+                <button type="submit" name="action" value="approve" class="primary-button">通過</button>
+                <button type="submit" name="action" value="revision" class="secondary-button">待修正</button>
+                <button type="submit" name="action" value="reject" class="danger-button">不通過</button>
+            </div>
+        </form>
+    </aside>
+</div>
+
+{% if history_entries %}
+<section class="review-panel">
+    <div class="section-label">審核歷程</div>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>時間</th>
+                <th>審核人員</th>
+                <th>原狀態</th>
+                <th>新狀態</th>
+                <th>備註</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in history_entries %}
+            <tr>
+                <td>{{ entry.review_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ entry.reviewer_name }}</td>
+                <td>{{ entry.previous_status or '—' }}</td>
+                <td>{{ entry.new_status }}</td>
+                <td>{{ entry.review_note or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</section>
+{% endif %}
+{% endblock %}

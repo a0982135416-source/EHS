@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}人工審核管理｜清單{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div class="section-label">待審核清單</div>
+    <h1>審核資料列表</h1>
+</section>
+
+<form method="get" class="filter-panel">
+    <div class="filter-grid">
+        <div>
+            <label>資料類型</label>
+            <select name="data_type">
+                <option value="">全部</option>
+                <option value="news" {% if data_type == 'news' %}selected{% endif %}>新聞</option>
+                <option value="regulation" {% if data_type == 'regulation' %}selected{% endif %}>法規</option>
+            </select>
+        </div>
+        <div>
+            <label>審核狀態</label>
+            <select name="status">
+                <option value="">全部</option>
+                <option value="待審核" {% if status == '待審核' %}selected{% endif %}>待審核</option>
+                <option value="通過" {% if status == '通過' %}selected{% endif %}>通過</option>
+                <option value="待修正" {% if status == '待修正' %}selected{% endif %}>待修正</option>
+                <option value="不通過" {% if status == '不通過' %}selected{% endif %}>不通過</option>
+            </select>
+        </div>
+        <div>
+            <label>審核人員</label>
+            <input type="text" name="reviewer_name" value="{{ reviewer_name }}" placeholder="姓名關鍵字">
+        </div>
+        <div>
+            <label>資料來源</label>
+            <input type="text" name="source_name" value="{{ source_name }}" placeholder="來源名稱">
+        </div>
+        <div>
+            <label>關鍵字</label>
+            <input type="text" name="q" value="{{ keyword }}" placeholder="標題/摘要關鍵字">
+        </div>
+        <div>
+            <label>起始日期</label>
+            <input type="date" name="start_date" value="{{ start_date }}">
+        </div>
+        <div>
+            <label>結束日期</label>
+            <input type="date" name="end_date" value="{{ end_date }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="primary-button">篩選</button>
+        </div>
+    </div>
+</form>
+
+<section class="review-panel">
+    {% if items.items %}
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>資料編號</th>
+                <th>資料類型</th>
+                <th>標題</th>
+                <th>來源</th>
+                <th>蒐集日期</th>
+                <th>審核狀態</th>
+                <th>審核人員</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in items.items %}
+            <tr>
+                <td>{{ record.id }}</td>
+                <td>{{ '新聞' if record.data_type == 'news' else '法規' }}</td>
+                <td>{{ record.title }}</td>
+                <td>{{ record.source_name or '未提供' }}</td>
+                <td>{{ record.collected_at.strftime('%Y-%m-%d') if record.collected_at else '—' }}</td>
+                <td><span class="status-badge {{ 'pending' if record.review_status == '待審核' else 'approved' if record.review_status == '通過' else 'revision' if record.review_status == '待修正' else 'rejected' }}">{{ record.review_status }}</span></td>
+                <td>{{ record.reviewer_name or '尚未審核' }}</td>
+                <td><a href="{{ url_for('main.review_detail', review_id=record.id) }}">查看</a></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="muted-note">目前沒有符合條件的審核資料。</p>
+    {% endif %}
+
+    {% if items.pages > 1 %}
+    <div class="pager">
+        {% if items.has_prev %}<a href="{{ url_for('main.review_list', page=items.prev_num, data_type=data_type, status=status, reviewer_name=reviewer_name, q=keyword, source_name=source_name, start_date=start_date, end_date=end_date) }}">上一頁</a>{% endif %}
+        <span>第 {{ items.page }} / {{ items.pages }} 頁</span>
+        {% if items.has_next %}<a href="{{ url_for('main.review_list', page=items.next_num, data_type=data_type, status=status, reviewer_name=reviewer_name, q=keyword, source_name=source_name, start_date=start_date, end_date=end_date) }}">下一頁</a>{% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

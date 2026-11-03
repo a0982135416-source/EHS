@@ -1,0 +1,74 @@
+{% extends 'base.html' %}
+{% block title %}人工審核管理｜歷程{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div class="section-label">審核歷程</div>
+    <h1>歷程查詢</h1>
+</section>
+
+<form method="get" class="filter-panel">
+    <div class="filter-grid">
+        <div>
+            <label>資料類型</label>
+            <select name="data_type">
+                <option value="">全部</option>
+                <option value="news" {% if data_type == 'news' %}selected{% endif %}>新聞</option>
+                <option value="regulation" {% if data_type == 'regulation' %}selected{% endif %}>法規</option>
+            </select>
+        </div>
+        <div>
+            <label>新狀態</label>
+            <select name="status">
+                <option value="">全部</option>
+                <option value="待審核" {% if status == '待審核' %}selected{% endif %}>待審核</option>
+                <option value="通過" {% if status == '通過' %}selected{% endif %}>通過</option>
+                <option value="待修正" {% if status == '待修正' %}selected{% endif %}>待修正</option>
+                <option value="不通過" {% if status == '不通過' %}selected{% endif %}>不通過</option>
+            </select>
+        </div>
+        <div>
+            <label>審核人員</label>
+            <input type="text" name="reviewer_name" value="{{ reviewer_name }}">
+        </div>
+        <div class="filter-actions">
+            <button type="submit" class="primary-button">搜尋</button>
+        </div>
+    </div>
+</form>
+
+<section class="review-panel">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>時間</th>
+                <th>資料類型</th>
+                <th>資料編號</th>
+                <th>原狀態</th>
+                <th>新狀態</th>
+                <th>審核人員</th>
+                <th>備註</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for entry in items.items %}
+            <tr>
+                <td>{{ entry.review_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                <td>{{ '新聞' if entry.data_type == 'news' else '法規' }}</td>
+                <td>{{ entry.data_id }}</td>
+                <td>{{ entry.previous_status or '—' }}</td>
+                <td>{{ entry.new_status }}</td>
+                <td>{{ entry.reviewer_name }}</td>
+                <td>{{ entry.review_note or '—' }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if items.pages > 1 %}
+    <div class="pager">
+        {% if items.has_prev %}<a href="{{ url_for('main.review_history', page=items.prev_num, status=status, reviewer_name=reviewer_name, data_type=data_type) }}">上一頁</a>{% endif %}
+        <span>第 {{ items.page }} / {{ items.pages }} 頁</span>
+        {% if items.has_next %}<a href="{{ url_for('main.review_history', page=items.next_num, status=status, reviewer_name=reviewer_name, data_type=data_type) }}">下一頁</a>{% endif %}
+    </div>
+    {% endif %}
+</section>
+{% endblock %}

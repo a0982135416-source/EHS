@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}人工審核登入{% endblock %}
+{% block content %}
+<section class="page-header">
+    <div class="section-label">審核入口</div>
+    <h1>人工審核管理系統</h1>
+    <p class="muted-note">未登入使用者僅能瀏覽公開資料，審核與管理操作需經身份驗證後才能進行。</p>
+</section>
+
+<div class="auth-panel">
+    <form method="post" class="form-panel">
+        {{ form.hidden_tag() }}
+        <div class="form-row">
+            <label for="username">帳號</label>
+            {{ form.username(class_='form-control', placeholder='請輸入帳號') }}
+        </div>
+        <div class="form-row">
+            <label for="password">密碼</label>
+            {{ form.password(class_='form-control', placeholder='請輸入密碼') }}
+        </div>
+        <div class="form-actions">
+            {{ form.submit(class_='primary-button') }}
+        </div>
+    </form>
+</div>
+{% endblock %}

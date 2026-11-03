@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}法規版本比對｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header paper-panel">
+    <div class="section-label">法規版本比對</div>
+    <h1>新舊條文比較</h1>
+    <p class="muted-note">所有自動產生的法規效果摘要均標示為「待確認」，並僅作為版本檢核用，不得視為正式法律解釋。</p>
+</section>
+
+<div class="stats-grid review-grid">
+    <div class="stat-card">
+        <div class="stat-label">版本基線數</div>
+        <div class="stat-value">{{ version_count }}</div>
+    </div>
+    <div class="stat-card approved">
+        <div class="stat-label">已通過比對</div>
+        <div class="stat-value">{{ approved_count }}</div>
+    </div>
+    <div class="stat-card pending">
+        <div class="stat-label">待審核差異</div>
+        <div class="stat-value">{{ pending_count }}</div>
+    </div>
+</div>
+
+{% if current_user.is_authenticated %}
+<div class="toolbar">
+    <form method="post" action="{{ url_for('main.generate_regulation_changes') }}">
+        <button type="submit" class="primary-button">重新比對版本</button>
+    </form>
+</div>
+<p class="muted-note">{% if can_view_all %}目前為審核角色，可查看已通過、待審核與待修正的比對紀錄。{% else %}公開頁面僅顯示已通過審核的法規差異紀錄。{% endif %}</p>
+{% else %}
+<p class="muted-note">公開頁面僅顯示已通過人工審核的法規差異紀錄；待確認與待修正內容保留於審核管理中。</p>
+{% endif %}
+
+{% if items %}
+<div class="compare-grid">
+    {% for item in items %}
+    <article class="compare-panel paper-panel">
+        <div class="compare-header-row">
+            <div>
+                <h3>{{ item.regulation.name }}</h3>
+                <div class="meta-stack compact-stack">
+                    <span>變更類型：{{ item.change_type }}</span>
+                    <span>條文代號：{{ item.article_no or '待確認' }}</span>
+                    <span>來源：{{ item.regulation.source_name or '官方資料' }}</span>
+                </div>
+            </div>
+            {% set badge_class = 'pending' %}
+            {% if item.review_status == '通過' %}{% set badge_class = 'approved' %}{% elif item.review_status == '待修正' %}{% set badge_class = 'revision' %}{% elif item.review_status == '不通過' %}{% set badge_class = 'rejected' %}{% endif %}
+            <span class="status-badge {{ badge_class }}">{{ item.review_status }}</span>
+        </div>
+
+        <div class="compare-columns">
+            <div class="compare-column">
+                <h4>修正前</h4>
+                <div class="compare-body">{{ item.before_text or '尚未提供' }}</div>
+            </div>
+            <div class="compare-column">
+                <h4>修正後</h4>
+                <div class="compare-body">{{ item.after_text or '尚未提供' }}</div>
+            </div>
+        </div>
+
+        <div class="compare-summary-box">
+            <div class="summary-block">
+                <h4>差異標示</h4>
+                <pre>{{ item.difference_marker or '尚未判定' }}</pre>
+            </div>
+            <div class="summary-block">
+                <h4>修正重點摘要</h4>
+                <p>{{ item.summary or '待確認' }}</p>
+            </div>
+            <div class="summary-block">
+                <h4>可能新增義務</h4>
+                <p>{{ item.new_obligations or '待人工確認' }}</p>
+            </div>
+            <div class="summary-block">
+                <h4>可能影響的工作流程</h4>
+                <p>{{ item.workflow_impact or '待人工確認' }}</p>
+            </div>
+        </div>
+
+        <ul class="compare-meta-list">
+            <li><strong>預告日期：</strong>{{ item.regulation.notice_date.strftime('%Y-%m-%d') if item.regulation.notice_date else '尚未確認' }}</li>
+            <li><strong>公布日期：</strong>{{ item.published_date.strftime('%Y-%m-%d') if item.published_date else '尚未確認' }}</li>
+            <li><strong>施行日期：</strong>{{ item.effective_date.strftime('%Y-%m-%d') if item.effective_date else '尚未確認' }}</li>
+            <li><strong>官方來源：</strong>{% if item.official_url %}<a href="{{ item.official_url }}" target="_blank" rel="noopener noreferrer">開啟官方連結</a>{% else %}尚未提供{% endif %}</li>
+        </ul>
+    </article>
+    {% endfor %}
+</div>
+{% else %}
+<section class="paper-panel review-panel">
+    <div class="section-label">目前狀態</div>
+    <h3>尚未產生可用的條文差異紀錄</h3>
+    <p class="muted-note">目前系統已建立版本基線 {{ version_count }} 筆，待官方條文版本資料補齊後，才會自動生成新舊條文差異紀錄。系統僅保留已蒐集來源與版本資訊，所有自動摘要仍標示為「待確認」。</p>
+    {% if versions %}
+    <div class="mini-row">
+        <h4>已存版本</h4>
+        <ul>
+            {% for version in versions %}
+            <li>{{ version.regulation.name }}｜{{ version.version_label }}｜{{ version.version_date.strftime('%Y-%m-%d') if version.version_date else '日期未確認' }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</section>
+{% endif %}
+
+<aside class="paper-panel review-panel">
+    <div class="section-label">審核說明</div>
+    <p>本頁僅顯示資料庫中已存在的版本比對紀錄；若沒有可靠的修正前版本，系統不會偽造官方法律效果摘要。</p>
+    <p>當官方條文版本資料足夠時，審核人員可重新比對並核對官方原始公告與施行版本。</p>
+</aside>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}法規資訊｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header">
+    <h1>法規資訊</h1>
+</section>
+
+<div class="news-list">
+    {% for regulation in items.items %}
+    <article class="news-item">
+        <h2><a href="{{ url_for('main.regulation_detail', id=regulation.id) }}">{{ regulation.name }}</a></h2>
+        <div class="story-meta">
+            <span>{{ regulation.authority or '主管機關未確認' }}</span>
+            <span>{{ regulation.status }}</span>
+            <span>{{ regulation.published_date.strftime('%Y-%m-%d') if regulation.published_date else '公布日期未確認' }}</span>
+        </div>
+        <p>{{ (regulation.summary|striptags) or '摘要尚未提供。' }}</p>
+        {% if regulation.official_url %}
+        <a href="{{ regulation.official_url }}" target="_blank" rel="noopener noreferrer">官方公告連結</a>
+        {% endif %}
+    </article>
+    {% else %}
+    <p>目前沒有法規資料。</p>
+    {% endfor %}
+</div>
+
+{% if items.pages > 1 %}
+<nav class="pager">
+    {% if items.has_prev %}<a href="{{ url_for('main.regulations', page=items.prev_num) }}">上一頁</a>{% endif %}
+    <span>第 {{ items.page }} / {{ items.pages }} 頁</span>
+    {% if items.has_next %}<a href="{{ url_for('main.regulations', page=items.next_num) }}">下一頁</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}

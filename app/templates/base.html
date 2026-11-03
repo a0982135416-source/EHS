@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}職安日報{% endblock %}</title>
+    <meta name="description" content="職業災害新聞與職業安全衛生法規資訊平台">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header class="paper-header">
+        <div class="masthead">
+            <div>
+                <div class="edition">職安日報</div>
+                <div class="english-name">OCCUPATIONAL SAFETY DAILY</div>
+            </div>
+            <div class="meta-right">
+                <div>{{ datetime_now.strftime('%Y-%m-%d') }}</div>
+                <div>{{ weekday }}</div>
+                <div>第 {{ issue_no }} 期</div>
+            </div>
+        </div>
+        <nav class="top-nav" aria-label="主導覽">
+            <a href="{{ url_for('main.index') }}">報紙首頁</a>
+            <a href="{{ url_for('main.news') }}">職災新聞</a>
+            <a href="{{ url_for('main.regulations') }}">法規草案</a>
+            <a href="{{ url_for('main.regulations') }}">最新法規</a>
+            <a href="{{ url_for('main.regulation_changes') }}">新舊條文對照</a>
+            <a href="{{ url_for('main.statistics') }}">統計分析</a>
+            <a href="{{ url_for('main.update_logs') }}">更新紀錄</a>
+            <a href="{{ url_for('main.review_dashboard') }}">人工審核管理</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('main.logout') }}">登出 {{ current_user.full_name }}</a>
+            {% else %}
+                <a href="{{ url_for('main.login') }}">審核登入</a>
+            {% endif %}
+        </nav>
+    </header>
+    <main class="page-shell">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category or 'info' }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

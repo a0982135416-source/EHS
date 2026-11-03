@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}職安日報｜首頁{% endblock %}
+{% block content %}
+<section class="lead-story paper-panel">
+    <div class="section-label">今日頭條</div>
+    {% if latest_news %}
+        {% set lead = latest_news[0] %}
+        <div class="front-page-grid">
+            <div class="lead-main">
+                <div class="headline-kicker">焦點新聞</div>
+                <h1>{{ lead.title }}</h1>
+                <p class="summary">{{ (lead.summary|striptags) or '此篇新聞尚未提供摘要。' }}</p>
+                <div class="story-meta">
+                    <span>{{ lead.published_at.strftime('%Y-%m-%d') if lead.published_at else '日期未確認' }}</span>
+                    <span>{{ lead.source_name }}</span>
+                    <span class="status-badge classify">{{ lead.industry or '待分類' }}</span>
+                    <span class="status-badge classify">{{ lead.accident_type or '待分類' }}</span>
+                    <span class="status-badge pending">{{ lead.verification_status or '待確認' }}</span>
+                </div>
+                {% if lead.source_url %}
+                <a class="read-more" href="{{ lead.source_url }}" target="_blank" rel="noopener noreferrer">閱讀原始新聞</a>
+                {% endif %}
+            </div>
+            <aside class="lead-side">
+                <div class="section-label">法規專欄</div>
+                {% if latest_regulations %}
+                    {% for regulation in latest_regulations[:3] %}
+                    <article class="mini-reg-card">
+                        <h3>{{ regulation.name }}</h3>
+                        <p>{{ (regulation.summary|striptags) or '法規摘要尚未提供。' }}</p>
+                        <div class="story-meta compact-meta">
+                            <span>{{ regulation.authority or '主管機關未確認' }}</span>
+                            <span>{{ regulation.status }}</span>
+                        </div>
+                        {% if regulation.official_url %}
+                        <a href="{{ regulation.official_url }}" target="_blank" rel="noopener noreferrer">官方公告</a>
+                        {% endif %}
+                    </article>
+                    {% endfor %}
+                {% else %}
+                    <p>目前沒有法規資料。</p>
+                {% endif %}
+            </aside>
+        </div>
+    {% else %}
+        <div class="front-page-grid empty-state-grid">
+            <div class="lead-main">
+                <div class="headline-kicker">資料狀態</div>
+                <h1>尚無職災新聞資料</h1>
+                <p class="summary">目前資料庫尚未匯入任何新聞資料，請先執行更新作業。</p>
+            </div>
+            <aside class="lead-side">
+                <div class="section-label">法規專欄</div>
+                <p>目前未收錄法規公告資料。</p>
+            </aside>
+        </div>
+    {% endif %}
+</section>
+
+<div class="two-column-layout">
+    <section class="paper-panel">
+        <div class="section-label">職災新聞專欄</div>
+        {% if latest_news %}
+            {% for article in latest_news %}
+            <article class="news-card">
+                <h2>{{ article.title }}</h2>
+                <p>{{ (article.summary|striptags) or '摘要尚未提供。' }}</p>
+                <div class="story-meta">
+                    <span>{{ article.published_at.strftime('%Y-%m-%d') if article.published_at else '日期未確認' }}</span>
+                    <span>{{ article.source_name }}</span>
+                    <span class="status-badge classify">{{ article.industry or '待分類' }}</span>
+                    <span class="status-badge classify">{{ article.accident_type or '待分類' }}</span>
+                    <span class="status-badge pending">{{ article.verification_status or '待確認' }}</span>
+                </div>
+                {% if article.source_url %}
+                <a href="{{ article.source_url }}" target="_blank" rel="noopener noreferrer">原始新聞連結</a>
+                {% endif %}
+            </article>
+            {% endfor %}
+        {% else %}
+            <p>目前沒有可展示的職災新聞。</p>
+        {% endif %}
+    </section>
+
+    <aside class="paper-panel sidebar-panel">
+        <div class="section-label">法規變革專欄</div>
+        {% if latest_regulations %}
+            {% for regulation in latest_regulations %}
+            <article class="reg-card">
+                <h3>{{ regulation.name }}</h3>
+                <p>{{ (regulation.summary|striptags) or '法規摘要尚未提供。' }}</p>
+                <div class="story-meta compact-meta">
+                    <span>{{ regulation.authority or '主管機關未確認' }}</span>
+                    <span>{{ regulation.status }}</span>
+                </div>
+                {% if regulation.official_url %}
+                <a href="{{ regulation.official_url }}" target="_blank" rel="noopener noreferrer">官方公告</a>
+                {% endif %}
+            </article>
+            {% endfor %}
+        {% else %}
+            <p>目前沒有法規資料。</p>
+        {% endif %}
+    </aside>
+</div>
+
+<div class="status-bar paper-panel">
+    <span>最後更新：{{ last_update.finished_at.strftime('%Y-%m-%d %H:%M') if last_update and last_update.finished_at else '尚未更新' }}</span>
+    <span>今日資料更新狀態：{{ '已更新' if last_update else '未執行' }}</span>
+</div>
+{% endblock %}
+

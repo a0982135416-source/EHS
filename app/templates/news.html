@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}職災新聞｜職安日報{% endblock %}
+{% block content %}
+<section class="page-header">
+    <h1>職災新聞</h1>
+    <form method="get" class="toolbar">
+        <input type="text" name="q" value="{{ search }}" placeholder="搜尋新聞關鍵字">
+        <button type="submit">搜尋</button>
+    </form>
+</section>
+
+<div class="news-list">
+    {% for article in items.items %}
+    <article class="news-item">
+        <h2>{{ article.title }}</h2>
+        <p>{{ (article.summary|striptags) or '摘要尚未提供。' }}</p>
+        <div class="story-meta">
+            <span>{{ article.published_at.strftime('%Y-%m-%d') if article.published_at else '日期未確認' }}</span>
+            <span>{{ article.source_name }}</span>
+            <span class="status-badge classify">{{ article.industry or '待分類' }}</span>
+            <span class="status-badge classify">{{ article.accident_type or '待分類' }}</span>
+            <span class="status-badge pending">{{ article.verification_status or '待確認' }}</span>
+        </div>
+        {% if article.source_url %}
+        <a href="{{ article.source_url }}" target="_blank" rel="noopener noreferrer">原始新聞連結</a>
+        {% endif %}
+    </article>
+    {% else %}
+    <p>目前沒有符合條件的新聞。</p>
+    {% endfor %}
+</div>
+
+{% if items.pages > 1 %}
+<nav class="pager">
+    {% if items.has_prev %}<a href="{{ url_for('main.news', page=items.prev_num, q=search) }}">上一頁</a>{% endif %}
+    <span>第 {{ items.page }} / {{ items.pages }} 頁</span>
+    {% if items.has_next %}<a href="{{ url_for('main.news', page=items.next_num, q=search) }}">下一頁</a>{% endif %}
+</nav>
+{% endif %}
+{% endblock %}
